@@ -16,6 +16,10 @@ typedef struct {
 
 thread_task_list_t* thread_task_list_init();
 
+int add_task(thread_task_list_t* queue, thread_task_t* task);
+
+thread_task_t* next(thread_task_list_t* queue);
+
 void thread_task_list_destroy(thread_task_list_t* list);
 
 #endif

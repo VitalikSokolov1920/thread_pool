@@ -22,7 +22,7 @@ thread_task_list_t* thread_task_list_init() {
     return list;
 }
 
-int add_task(thread_task_list_t* queue, thread_task_t* task) {
+int thread_task_list_add_task(thread_task_list_t* queue, thread_task_t* task) {
     if (!queue || !task || !queue->mutex) {
         return -1;
     }
@@ -41,7 +41,7 @@ int add_task(thread_task_list_t* queue, thread_task_t* task) {
     return 0;
 }
 
-thread_task_t* next(thread_task_list_t* queue) {
+thread_task_t* thread_task_list_next_task(thread_task_list_t* queue) {
     pthread_mutex_lock(queue->mutex);
 
     if (!queue->head) {

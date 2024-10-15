@@ -38,9 +38,21 @@ thread_pool_t* thread_pool_init() {
 void* thread_pool_thread(void* arg) {
     thread_pool_arg_t* pool_arg = (thread_pool_arg_t*)arg;
 
-    pthread_mutex_lock(pool_arg->cond_mutex);
-    pthread_cond_wait(pool_arg->cond, pool_arg->cond_mutex);
-    pthread_mutex_unlock(pool_arg->cond_mutex);
+    while(1) {
+        pthread_mutex_lock(pool_arg->cond_mutex);
+        pthread_cond_wait(pool_arg->cond, pool_arg->cond_mutex);
+        pthread_mutex_unlock(pool_arg->cond_mutex);
+
+        thread_task_t* task = thread_task_list_next_task(pool_arg->pool->queue);
+
+        if (!task) {
+            continue;
+        }
+
+        if (task->task_handler) {
+            task->task_handler(task->task_ctx);
+        }
+    }
 
     return NULL;
 }

@@ -72,7 +72,7 @@ void thread_task_list_destroy(thread_task_list_t* list) {
 
     if (list->head) {
         for (thread_task_t* cur = list->head; cur;) {
-            thread_task_list_t* forDel = cur;
+            thread_task_t* forDel = cur;
 
             cur = cur->next;
 

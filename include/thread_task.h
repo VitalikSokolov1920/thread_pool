@@ -14,7 +14,8 @@ void thread_task_ctx_destroy(thread_task_ctx_t* ctx);
 
 typedef void*(*thread_task_handler_t)(void*); 
 
-typedef struct {
+typedef struct thread_task_t thread_task_t;
+typedef struct thread_task_t {
     thread_task_handler_t task_handler;
     thread_task_ctx_t* task_ctx;
     thread_task_t* next;

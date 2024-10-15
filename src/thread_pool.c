@@ -1,3 +1,5 @@
+#include <malloc.h>
+
 #include "thread_pool.h"
 #include "thread_task_list.h"
 
@@ -40,7 +42,7 @@ void* thread_pool_thread(void* arg) {
     pthread_cond_wait(pool_arg->cond, pool_arg->cond_mutex);
     pthread_mutex_unlock(pool_arg->cond_mutex);
 
-    
+    return NULL;
 }
 
 void thread_pool_destroy(thread_pool_t* pool) {

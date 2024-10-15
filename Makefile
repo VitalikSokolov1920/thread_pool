@@ -5,15 +5,19 @@ ifeq ($(OS), Windows_NT)
 	TARGET=$(TARGET_PREFIX).dll
 	DEL_CMD=del
 	TEST_TAGET=test.exe
-	SOURCES=
+	SOURCES=src\thread_pool.o \
+			src\thread_task.o \
+			src\thread_task_list.o
 else
 	TARGET=$(TARGET_PREFIX).so
 	DEL_CMD=rm -f
 	TEST_TAGET=test
-	SOURCES=
+	SOURCES=src/thread_pool.o \
+			src/thread_task.o \
+			src/thread_task_list.o
 endif
 
-LDFLAGS=-shared -ggdb -g -O0 -Werror -std=c++17
+LDFLAGS=-shared -ggdb -g -O0 -Werror -std=c++17 -lpthread
 CPPFLAGS=-Iinclude -DDEBUG -ggdb -g -fPIC -O0 -Werror -std=c++17
 CC=g++
 

@@ -4,6 +4,8 @@
 #include "thread_task_list.h"
 
 thread_pool_t* thread_pool_init() {
+    // pool
+
     thread_pool_t* pool = NULL;
 
     pool = (thread_pool_t*)malloc(sizeof(thread_pool_t));
@@ -14,6 +16,10 @@ thread_pool_t* thread_pool_init() {
 
     pool->queue = thread_task_list_init();
 
+    // available_threads
+
+    atomic_init(&pool->available_threads, POOL_SIZE);
+
     if (!pool->queue) {
         fprintf(stderr, "thread_pool_init(): Error during init queue\n");
 
@@ -21,6 +27,8 @@ thread_pool_t* thread_pool_init() {
 
         return NULL;
     }
+
+    // cond
 
     pthread_cond_t* cond = (pthread_cond_t*)malloc(sizeof(pthread_cond_t));
 
@@ -36,18 +44,80 @@ thread_pool_t* thread_pool_init() {
 
     pool->cond = cond;
 
+    // cond_mutex
+
+    pthread_mutex_t* cond_mutex = (pthread_mutex_t*)malloc(sizeof(pthread_mutex_t));
+
+    if (!cond_mutex) {
+        fprintf(stderr, "thread_pool_init(): Error during create pthread_mutex_t\n");
+
+        thread_pool_destroy(pool);
+
+        return NULL;
+    }
+
+    pthread_mutex_init(cond_mutex, NULL);
+
+    pool->cond_mutex = cond_mutex;
+
+    // main_thread_cond
+
+    pthread_cond_t* main_thread_cond = (pthread_cond_t*)malloc(sizeof(pthread_cond_t));
+
+    if (!main_thread_cond) {
+        fprintf(stderr, "thread_pool_init(): Error during create pthread_cond_t\n");
+
+        thread_pool_destroy(pool);
+
+        return NULL;
+    }
+
+    pthread_cond_init(main_thread_cond, NULL);
+
+    pool->main_thread_cond = main_thread_cond;
+
+    // main_thread_mutex
+
+    pthread_mutex_t* main_thread_mutex = (pthread_mutex_t*)malloc(sizeof(pthread_mutex_t));
+
+    if (!main_thread_mutex) {
+        fprintf(stderr, "thread_pool_init(): Error during create pthread_mutex_t\n");
+
+        thread_pool_destroy(pool);
+
+        return NULL;
+    }
+
+    pthread_mutex_init(main_thread_mutex, NULL);
+
+    pool->main_thread_mutex = main_thread_mutex;
+
+    // attrs
+
+    pthread_attr_t attrs = {0};
+    pthread_attr_init(&attrs);
+
+    pthread_create(&pool->main_thread_pid, &attrs, thread_main_thread, pool);
+
+    for (int i = 0; i < POOL_SIZE; i++) {
+        pthread_t pid;
+        pthread_create(&pid, &attrs, thread_pool_thread, pool);
+    }
+
+    pthread_attr_destroy(&attrs);
+
     return pool;
 }
 
 void* thread_pool_thread(void* arg) {
-    thread_pool_arg_t* pool_arg = (thread_pool_arg_t*)arg;
+    thread_pool_t* pool = (thread_pool_t*)arg;
 
     while(1) {
-        pthread_mutex_lock(pool_arg->cond_mutex);
-        pthread_cond_wait(pool_arg->cond, pool_arg->cond_mutex);
-        pthread_mutex_unlock(pool_arg->cond_mutex);
+        pthread_mutex_lock(pool->cond_mutex);
+        pthread_cond_wait(pool->cond, pool->cond_mutex);
+        pthread_mutex_unlock(pool->cond_mutex);
 
-        thread_task_t* task = thread_task_list_next_task(pool_arg->pool->queue);
+        thread_task_t* task = thread_task_list_next_task(pool->queue);
 
         if (!task) {
             fprintf(stderr, "thread_pool_thread(): task == NULL\n");
@@ -64,9 +134,34 @@ void* thread_pool_thread(void* arg) {
     return NULL;
 }
 
+void* thread_main_thread(void* arg) {
+    thread_pool_t* pool = (thread_pool_t*)arg;
+
+    if (!pool) {
+        return NULL;
+    }
+
+    while (1) {
+        if (pool->queue->len > 0 && pool->available_threads > 0) {
+            pthread_cond_signal(pool->cond);
+        } else if (pool->queue->len <= 0) {
+            // if (pool->available_threads == POOL_SIZE) {
+            pthread_mutex_lock(pool->main_thread_mutex);
+            pthread_cond_wait(pool->main_thread_cond, pool->main_thread_mutex);
+            pthread_mutex_unlock(pool->main_thread_mutex);
+
+            pthread_cond_signal(pool->cond);
+            // }
+        }
+    }
+}
+
 int thread_pool_add_task(thread_pool_t* pool, thread_task_t* task) {
     if (!thread_task_list_add_task(pool->queue, task)) {
-        pthread_cond_signal(pool->cond);
+
+        pthread_mutex_lock(pool->main_thread_mutex);
+        pthread_cond_signal(pool->main_thread_cond);
+        pthread_mutex_unlock(pool->main_thread_mutex);
 
         return 0;
     } else {
@@ -87,5 +182,25 @@ void thread_pool_destroy(thread_pool_t* pool) {
 
     if (pool->cond) {
         pthread_cond_destroy(pool->cond);
+
+        free(pool->cond);
+    }
+
+    if (pool->cond_mutex) {
+        pthread_mutex_destroy(pool->cond_mutex);
+
+        free(pool->cond_mutex);
+    }
+
+    if (pool->main_thread_cond) {
+        pthread_cond_destroy(pool->main_thread_cond);
+
+        free(pool->main_thread_cond);
+    }
+
+    if (pool->main_thread_mutex) {
+        pthread_mutex_destroy(pool->main_thread_mutex);
+
+        free(pool->main_thread_mutex);
     }
 }

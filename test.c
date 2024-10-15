@@ -4,6 +4,8 @@
 #include "thread_pool.h"
 
 void* foo(void* arg) {
+    fprintf(stdout, "foo(): start\n");
+
     thread_task_ctx_t* ctx = (thread_task_ctx_t*)arg;
 
     if (!ctx) {
@@ -15,6 +17,8 @@ void* foo(void* arg) {
     int* i = (int*)ctx->data;
 
     fprintf(stdout, "foo: i = %d\n", *i);
+
+    sleep(1);
 
     return NULL;
 }
@@ -28,7 +32,7 @@ int main(int argc, char** argv) {
         return -1;
     }
 
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < 256; i++) {
         thread_task_t* task = thread_task_init(foo, &i, sizeof(i));
 
         if (!task) {
@@ -38,5 +42,10 @@ int main(int argc, char** argv) {
         thread_pool_add_task(pool, task);
     }
 
-    sleep(5);
+    while (pool->queue->len) {
+        fprintf(stdout, "Waiting...\n");
+        sleep(1);
+    }
+
+    scanf("%s");
 }

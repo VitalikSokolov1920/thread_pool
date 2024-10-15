@@ -17,9 +17,9 @@ else
 			src/thread_task_list.o
 endif
 
-LDFLAGS=-shared -ggdb -g -O0 -Werror -std=c++17 -lpthread
-CPPFLAGS=-Iinclude -DDEBUG -ggdb -g -fPIC -O0 -Werror -std=c++17
-CC=g++
+LDFLAGS=-shared -ggdb -g -O0 -Werror -lpthread
+CPPFLAGS=-Iinclude -DDEBUG -ggdb -g -fPIC -O0 -Werror
+CC=gcc
 
 .PHONY: all clean clean_all
 

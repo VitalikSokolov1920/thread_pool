@@ -36,6 +36,8 @@ int thread_task_list_add_task(thread_task_list_t* queue, thread_task_t* task) {
         queue->tail = queue->tail->next;
     }
 
+    queue->len++;
+
     pthread_mutex_unlock(queue->mutex);
 
     return 0;
@@ -53,6 +55,8 @@ thread_task_t* thread_task_list_next_task(thread_task_list_t* queue) {
     thread_task_t* task = queue->head;
 
     queue->head = queue->head->next;
+
+    queue->len--;
 
     pthread_mutex_unlock(queue->mutex);
 

@@ -9,7 +9,7 @@ ifeq ($(OS), Windows_NT)
 			src\thread_task.o \
 			src\thread_task_list.o
 else
-	TARGET=$(TARGET_PREFIX).so
+	TARGET=lib$(TARGET_PREFIX).so
 	DEL_CMD=rm -f
 	TEST_TAGET=test
 	SOURCES=src/thread_pool.o \

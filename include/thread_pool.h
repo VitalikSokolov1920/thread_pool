@@ -18,6 +18,8 @@ thread_pool_t* thread_pool_init();
 
 void* thread_pool_thread(void* arg);
 
+int thread_pool_add_task(thread_pool_t* pool, thread_task_t* task);
+
 void thread_pool_destroy(thread_pool_t* pool);
 
 #endif

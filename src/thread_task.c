@@ -22,7 +22,7 @@ thread_task_ctx_t* thread_task_ctx_init(void* data, thread_task_ctx_data_len_t d
 
     memcpy(ctx->data, data, data_len);
 
-    return 0;
+    return ctx;
 }
 
 void thread_task_ctx_destroy(thread_task_ctx_t* ctx) {

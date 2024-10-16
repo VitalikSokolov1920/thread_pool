@@ -27,10 +27,10 @@ all: clean_all $(SOURCES)
 	$(CC) $(LDFLAGS) $(SOURCES) -o $(TARGET)
 
 test: all
-	$(CC) $(TEST_TARGET_NAME) -o $(TEST_TAGET) -L. -l$(TARGET_PREFIX) -Iinclude
+	$(CC) $(TEST_TARGET_NAME) -o $(TEST_TAGET) -L. -l$(TARGET_PREFIX) -Iinclude -lpthread
 
 test_only:
-	$(CC) $(TEST_TARGET_NAME) -o $(TEST_TAGET) -L. -l$(TARGET_PREFIX) -Iinclude
+	$(CC) $(TEST_TARGET_NAME) -o $(TEST_TAGET) -L. -l$(TARGET_PREFIX) -Iinclude -lpthread
 
 %.o: %.c
 	$(CC) $(CPPFLAGS) -c $< -o $@

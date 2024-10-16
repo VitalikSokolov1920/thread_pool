@@ -13,6 +13,12 @@ thread_task_list_t* thread_task_list_init() {
 
     pthread_mutex_t* mutex = (pthread_mutex_t*)malloc(sizeof(pthread_mutex_t));
 
+    if (!mutex) {
+        thread_task_list_destroy(list);
+
+        return NULL;
+    }
+
     pthread_mutex_init(mutex, NULL);
 
     list->mutex = mutex;

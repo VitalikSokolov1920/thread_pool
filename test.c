@@ -18,8 +18,6 @@ void* foo(void* arg) {
 
     fprintf(stdout, "foo: i = %d\n", *i);
 
-    sleep(1);
-
     return NULL;
 }
 
@@ -30,6 +28,8 @@ int main(int argc, char** argv) {
         fprintf(stderr, "Error during thread_pool_init\n");
 
         return -1;
+    } else {
+        fprintf(stdout, "Succes init pool\n");
     }
 
     for (int i = 0; i < 256; i++) {
@@ -40,6 +40,8 @@ int main(int argc, char** argv) {
         }
 
         thread_pool_add_task(pool, task);
+
+        sleep(1);
     }
 
     while (pool->queue->len) {
@@ -47,5 +49,7 @@ int main(int argc, char** argv) {
         sleep(1);
     }
 
-    scanf("%s");
+    char c;
+
+    scanf("%c", &c);
 }

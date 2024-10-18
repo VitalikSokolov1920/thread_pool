@@ -2,6 +2,7 @@
 #include <unistd.h>
 
 #include "thread_pool.h"
+#include "list.h"
 
 void* foo(void* arg) {
     fprintf(stdout, "foo(): start\n");
@@ -21,7 +22,7 @@ void* foo(void* arg) {
     return NULL;
 }
 
-int main(int argc, char** argv) {
+int task_pool() {
     thread_pool_t* pool = thread_pool_init();
 
     if (!pool) {
@@ -52,4 +53,34 @@ int main(int argc, char** argv) {
     char c;
 
     scanf("%c", &c);
+}
+
+void test_list() {
+    list_t* list = list_init(sizeof(user));
+
+    if (!list) {
+        fprintf(stderr, "Error: list_init()");
+        
+        return;
+    }
+
+    user user1 = {.name = "user1", .age = 21};
+    user user2 = {.name = "user2", .age = 22};
+    user user3 = {.name = "user3", .age = 23};
+
+    list_add(list, &user1);
+    list_add(list, &user2);
+    list_add(list, &user3);
+
+    printf("list size %lu\n", list->len);
+
+    for (list_elem_t* cur = list->head; cur; cur = cur->next) {
+        user* u = cur->value;
+
+        printf("User name: %s, age: %d\n", u->name, u->age);
+    }
+}
+
+int main(int argc, char** argv) {
+    test_list();
 }

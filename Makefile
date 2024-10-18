@@ -7,14 +7,16 @@ ifeq ($(OS), Windows_NT)
 	TEST_TAGET=test.exe
 	SOURCES=src\thread_pool.o \
 			src\thread_task.o \
-			src\thread_task_list.o
+			src\thread_task_list.o \
+			src\list.o
 else
 	TARGET=lib$(TARGET_PREFIX).so
 	DEL_CMD=rm -f
 	TEST_TAGET=test
 	SOURCES=src/thread_pool.o \
 			src/thread_task.o \
-			src/thread_task_list.o
+			src/thread_task_list.o \
+			src/list.o
 endif
 
 LDFLAGS=-shared -ggdb -g -O0 -Werror -lpthread
@@ -35,7 +37,7 @@ test_only:
 %.o: %.c
 	$(CC) $(CPPFLAGS) -c $< -o $@
 
-clean_all: clean
+distclean: clean
 	$(DEL_CMD) $(TARGET) $(TEST_TAGET)
 
 clean:

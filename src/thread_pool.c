@@ -115,17 +115,19 @@ void* thread_pool_thread(void* arg) {
     while(1) {
         pthread_mutex_lock(pool->cond_mutex);
         pthread_cond_wait(pool->cond, pool->cond_mutex);
+        fprintf(stdout, "thread_pool_thread(): starting execute task\n");
         pthread_mutex_unlock(pool->cond_mutex);
 
         thread_task_t* task = thread_task_list_next_task(pool->queue);
 
         if (!task) {
-            fprintf(stderr, "thread_pool_thread(): task == NULL\n");
             continue;
         }
 
+        void* res;
+
         if (task->task_handler) {
-            task->task_handler(task->task_ctx);
+            res = task->task_handler(task->task_ctx);
         }
 
         thread_task_destoy(task);

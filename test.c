@@ -1,92 +1,108 @@
 #include <stdio.h>
 #include <unistd.h>
 
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <netinet/in.h>
+#include <netinet/ip.h>
+#include <arpa/inet.h>
+#include <string.h>
+#include <stdlib.h>
+
 #include "thread_pool.h"
-#include "containers/list.h"
 
-void* foo(void* arg) {
-    fprintf(stdout, "foo(): start\n");
+typedef struct {
+    thread_pool_t* pool;
+    int socket;
+    struct sockaddr_in remote;
+} process_conn_ctx_t;
 
+void* process_conn(void* arg) {
     thread_task_ctx_t* ctx = (thread_task_ctx_t*)arg;
 
-    if (!ctx) {
-        fprintf(stderr, "foo: ctx == NULL\n");
+    process_conn_ctx_t* conn_ctx = (process_conn_ctx_t*)(ctx->data);
+
+    printf("Socket: %d\n", conn_ctx->socket);
+
+    return NULL;
+}
+
+void* server_thread(void* arg) {
+    thread_task_ctx_t* ctx = (thread_task_ctx_t*)arg;
+
+    int server_fd = socket(AF_INET, SOCK_STREAM, 0);
+
+    if (server_fd == -1) {
+        perror("socket():");
 
         return NULL;
     }
 
-    int* i = (int*)ctx->data;
+    int ret = 0;
 
-    fprintf(stdout, "foo: i = %d\n", *i);
+    struct sockaddr_in adr;
 
-    return (void*)i;
-}
+    adr.sin_family = AF_INET;
+    adr.sin_addr.s_addr = inet_addr("192.168.0.103");
+    adr.sin_port = htonl(4444);
 
-int test_pool() {
-    thread_pool_t* pool = thread_pool_init();
+    if ((ret = bind(server_fd, &adr, sizeof(adr)))) {
+        perror("bind()");
 
-    if (!pool) {
-        fprintf(stderr, "Error during thread_pool_init\n");
-
-        return -1;
-    } else {
-        fprintf(stdout, "Succes init pool\n");
+        return NULL;
     }
 
-    for (int i = 0; i < 64; i++) {
-        thread_task_t* task = thread_task_init(foo, &i, sizeof(i));
+    if ((ret = listen(server_fd, 5))) {
+        perror("listen()");
 
-        if (!task) {
-            fprintf(stderr, "Error during create task\n");
+        return NULL;
+    }
+
+    while (1) {
+        struct sockaddr_in remote_adr;
+
+        memset(&remote_adr, 0, sizeof(remote_adr));
+
+        int sock = accept(server_fd, &remote_adr, sizeof(remote_adr));
+
+        if (sock == -1) {
+            perror("accept()");
+
+            continue;
         }
 
-        thread_pool_add_task(pool, task);
+        process_conn_ctx_t conn_ctx = {
+            .pool = ctx->data,
+            .socket = sock,
+            .remote = remote_adr
+        };
 
-        // sleep(1);
-    }
+        thread_task_t* task = thread_task_init(process_conn, &conn_ctx, sizeof(process_conn_ctx_t));
 
-    while (pool->queue->len) {
-        fprintf(stdout, "Waiting...\n");
-        sleep(1);
-    }
+        if (!task) {
+            fprintf(stderr, "error: thread_task_init()\n");
 
-    char c;
+            close(sock);
 
-    scanf("%c", &c);
-}
+            continue;
+        }
 
-typedef struct {
-    char* name;
-    int age;
-} user;
-
-void test_list() {
-    list_t* list = list_init(sizeof(user));
-
-    if (!list) {
-        fprintf(stderr, "Error: list_init()");
-        
-        return;
-    }
-
-    user user1 = {.name = "user1", .age = 21};
-    user user2 = {.name = "user2", .age = 22};
-    user user3 = {.name = "user3", .age = 23};
-
-    list_add(list, &user1);
-    list_add(list, &user2);
-    list_add(list, &user3);
-
-    printf("list size %lu\n", list->len);
-
-    for (list_elem_t* cur = list->head; cur; cur = cur->next) {
-        user* u = cur->value;
-
-        printf("User name: %s, age: %d\n", u->name, u->age);
+        thread_pool_add_task(ctx->data, task);
     }
 }
 
 int main(int argc, char** argv) {
-    // test_list();
-    test_pool();
+    thread_pool_t* pool = thread_pool_init();
+
+    if (!pool) {
+        fprintf(stderr, "error: thread_pool_init()\n");
+
+        exit(EXIT_FAILURE);
+    }
+
+    thread_task_t* task = thread_task_init(server_thread, pool, sizeof(pool));
+
+    thread_pool_add_task(pool, task);
+
+    scanf("Enter str: %s");
 }

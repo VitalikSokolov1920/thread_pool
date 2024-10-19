@@ -2,7 +2,7 @@
 #include <unistd.h>
 
 #include "thread_pool.h"
-#include "list.h"
+#include "containers/list.h"
 
 void* foo(void* arg) {
     fprintf(stdout, "foo(): start\n");
@@ -19,10 +19,10 @@ void* foo(void* arg) {
 
     fprintf(stdout, "foo: i = %d\n", *i);
 
-    return NULL;
+    return (void*)i;
 }
 
-int task_pool() {
+int test_pool() {
     thread_pool_t* pool = thread_pool_init();
 
     if (!pool) {
@@ -33,7 +33,7 @@ int task_pool() {
         fprintf(stdout, "Succes init pool\n");
     }
 
-    for (int i = 0; i < 256; i++) {
+    for (int i = 0; i < 64; i++) {
         thread_task_t* task = thread_task_init(foo, &i, sizeof(i));
 
         if (!task) {
@@ -42,7 +42,7 @@ int task_pool() {
 
         thread_pool_add_task(pool, task);
 
-        sleep(1);
+        // sleep(1);
     }
 
     while (pool->queue->len) {
@@ -54,6 +54,11 @@ int task_pool() {
 
     scanf("%c", &c);
 }
+
+typedef struct {
+    char* name;
+    int age;
+} user;
 
 void test_list() {
     list_t* list = list_init(sizeof(user));
@@ -82,5 +87,6 @@ void test_list() {
 }
 
 int main(int argc, char** argv) {
-    test_list();
+    // test_list();
+    test_pool();
 }

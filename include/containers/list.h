@@ -7,11 +7,6 @@
 #define CONVERT_ELEM_TO(elem, type) ((type)elem)
 
 typedef struct {
-    char* name;
-    int age;
-} user;
-
-typedef struct {
     void* value;
     void* next;
 } list_elem_t;

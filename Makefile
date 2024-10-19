@@ -8,7 +8,7 @@ ifeq ($(OS), Windows_NT)
 	SOURCES=src\thread_pool.o \
 			src\thread_task.o \
 			src\thread_task_list.o \
-			src\list.o
+			src\containers\list.o
 else
 	TARGET=lib$(TARGET_PREFIX).so
 	DEL_CMD=rm -f
@@ -16,7 +16,7 @@ else
 	SOURCES=src/thread_pool.o \
 			src/thread_task.o \
 			src/thread_task_list.o \
-			src/list.o
+			src/containers/list.o
 endif
 
 LDFLAGS=-shared -ggdb -g -O0 -Werror -lpthread

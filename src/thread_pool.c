@@ -1,4 +1,6 @@
 #include <malloc.h>
+#include <signal.h>
+#include <unistd.h>
 
 #include "thread_pool.h"
 #include "thread_task_list.h"
@@ -60,48 +62,24 @@ thread_pool_t* thread_pool_init() {
 
     pool->cond_mutex = cond_mutex;
 
-    // main_thread_cond
-
-    pthread_cond_t* main_thread_cond = (pthread_cond_t*)malloc(sizeof(pthread_cond_t));
-
-    if (!main_thread_cond) {
-        fprintf(stderr, "thread_pool_init(): Error during create pthread_cond_t\n");
-
-        thread_pool_destroy(pool);
-
-        return NULL;
-    }
-
-    pthread_cond_init(main_thread_cond, NULL);
-
-    pool->main_thread_cond = main_thread_cond;
-
-    // main_thread_mutex
-
-    pthread_mutex_t* main_thread_mutex = (pthread_mutex_t*)malloc(sizeof(pthread_mutex_t));
-
-    if (!main_thread_mutex) {
-        fprintf(stderr, "thread_pool_init(): Error during create pthread_mutex_t\n");
-
-        thread_pool_destroy(pool);
-
-        return NULL;
-    }
-
-    pthread_mutex_init(main_thread_mutex, NULL);
-
-    pool->main_thread_mutex = main_thread_mutex;
-
     // attrs
 
     pthread_attr_t attrs = {0};
+
     pthread_attr_init(&attrs);
 
     pthread_create(&pool->main_thread_pid, &attrs, thread_main_thread, pool);
 
-    for (int i = 0; i < POOL_SIZE; i++) {
+    pthread_t pid_list[POOL_SIZE] = { 0 };
+
+    for (size_t i = 0; i < POOL_SIZE; i++) {
         pthread_t pid;
         pthread_create(&pid, &attrs, thread_pool_thread, pool);
+        pid_list[i] = pid;
+    }
+
+    for (size_t i = 0; i < POOL_SIZE; i++) {
+        printf("thread [%lu] pid: %lu\n", i, pid_list[i]);
     }
 
     pthread_attr_destroy(&attrs);
@@ -115,8 +93,11 @@ void* thread_pool_thread(void* arg) {
     while(1) {
         pthread_mutex_lock(pool->cond_mutex);
         pthread_cond_wait(pool->cond, pool->cond_mutex);
-        fprintf(stdout, "thread_pool_thread(): starting execute task\n");
         pthread_mutex_unlock(pool->cond_mutex);
+
+        if (thread_task_list_is_empty(pool->queue)) {
+            continue;
+        }
 
         thread_task_t* task = thread_task_list_next_task(pool->queue);
 
@@ -124,10 +105,14 @@ void* thread_pool_thread(void* arg) {
             continue;
         }
 
+        fprintf(stdout, "thread_pool_thread(): starting execute task\n");
+
         void* res;
 
         if (task->task_handler) {
             res = task->task_handler(task->task_ctx);
+
+            fprintf(stdout, "task_handler result %d\n", *((int*)res));
         }
 
         thread_task_destoy(task);
@@ -139,31 +124,34 @@ void* thread_pool_thread(void* arg) {
 void* thread_main_thread(void* arg) {
     thread_pool_t* pool = (thread_pool_t*)arg;
 
+    signal(SIGUSR1, thread_sigusr1_handler);
+
     if (!pool) {
         return NULL;
     }
 
     while (1) {
-        if (pool->queue->len > 0 && pool->available_threads > 0) {
-            pthread_cond_signal(pool->cond);
-        } else if (pool->queue->len <= 0) {
-            // if (pool->available_threads == POOL_SIZE) {
-            pthread_mutex_lock(pool->main_thread_mutex);
-            pthread_cond_wait(pool->main_thread_cond, pool->main_thread_mutex);
-            pthread_mutex_unlock(pool->main_thread_mutex);
+        if (pool->queue->len > 0) {
+            if (pool->available_threads > 0) {
+                pthread_cond_signal(pool->cond);
+            } else {
+                pause();
+
+                pthread_cond_signal(pool->cond);
+            }
+        } else {
+            pause();
 
             pthread_cond_signal(pool->cond);
-            // }
         }
     }
 }
 
+static void thread_sigusr1_handler(int) {}
+
 int thread_pool_add_task(thread_pool_t* pool, thread_task_t* task) {
     if (!thread_task_list_add_task(pool->queue, task)) {
-
-        pthread_mutex_lock(pool->main_thread_mutex);
-        pthread_cond_signal(pool->main_thread_cond);
-        pthread_mutex_unlock(pool->main_thread_mutex);
+        pthread_kill(pool->main_thread_pid, SIGUSR1);
 
         return 0;
     } else {
@@ -192,17 +180,5 @@ void thread_pool_destroy(thread_pool_t* pool) {
         pthread_mutex_destroy(pool->cond_mutex);
 
         free(pool->cond_mutex);
-    }
-
-    if (pool->main_thread_cond) {
-        pthread_cond_destroy(pool->main_thread_cond);
-
-        free(pool->main_thread_cond);
-    }
-
-    if (pool->main_thread_mutex) {
-        pthread_mutex_destroy(pool->main_thread_mutex);
-
-        free(pool->main_thread_mutex);
     }
 }

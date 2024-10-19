@@ -49,6 +49,16 @@ int thread_task_list_add_task(thread_task_list_t* queue, thread_task_t* task) {
     return 0;
 }
 
+int thread_task_list_is_empty(thread_task_list_t* queue) {
+    pthread_mutex_lock(queue->mutex);
+
+    int res = queue->len <= 0;
+
+    pthread_mutex_unlock(queue->mutex);
+
+    return res;
+}
+
 thread_task_t* thread_task_list_next_task(thread_task_list_t* queue) {
     pthread_mutex_lock(queue->mutex);
 

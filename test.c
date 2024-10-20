@@ -43,7 +43,7 @@ void* server_thread(void* arg) {
     struct sockaddr_in adr;
 
     adr.sin_family = AF_INET;
-    adr.sin_addr.s_addr = inet_addr("192.168.0.103");
+    adr.sin_addr.s_addr = inet_addr("127.0.0.1");
     adr.sin_port = htonl(4444);
 
     if ((ret = bind(server_fd, &adr, sizeof(adr)))) {

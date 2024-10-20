@@ -20,13 +20,15 @@ int main() {
 
     struct sockaddr_in remote;
 
+    memset(&remote, 0, sizeof(remote));
+
     remote.sin_port = htonl(4444);
-    remote.sin_addr.s_addr = inet_addr("192.168.0.103");
+    remote.sin_addr.s_addr = inet_addr("127.0.0.1");
     remote.sin_family = AF_INET;
 
     int ret = connect(sock, &remote, sizeof(remote));
 
-    if (ret) {
+    if (ret == -1) {
         perror("connect()");
 
         exit(EXIT_FAILURE);

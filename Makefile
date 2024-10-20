@@ -30,15 +30,18 @@ all: clean_all $(SOURCES)
 
 test: all
 	$(CC) $(TEST_TARGET_NAME) -o $(TEST_TAGET) -L. -l$(TARGET_PREFIX) -Iinclude -lpthread
+	$(CC) test_client.c -o client
 
 test_only:
 	$(CC) $(TEST_TARGET_NAME) -o $(TEST_TAGET) -L. -l$(TARGET_PREFIX) -Iinclude -lpthread
+	$(CC) test_client.c -o client
 
 %.o: %.c
 	$(CC) $(CPPFLAGS) -c $< -o $@
 
 distclean: clean
 	$(DEL_CMD) $(TARGET) $(TEST_TAGET)
+	$(DEL_CMD) client
 
 clean:
 	$(DEL_CMD) $(SOURCES)

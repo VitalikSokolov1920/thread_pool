@@ -147,7 +147,7 @@ void* thread_main_thread(void* arg) {
     }
 }
 
-static void thread_sigusr1_handler(int) {}
+static void thread_sigusr1_handler(int ignore) {}
 
 int thread_pool_add_task(thread_pool_t* pool, thread_task_t* task) {
     if (!thread_task_list_add_task(pool->queue, task)) {

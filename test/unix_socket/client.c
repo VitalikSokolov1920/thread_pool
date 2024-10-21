@@ -3,6 +3,7 @@
 
 #include <sys/socket.h>
 #include <sys/types.h>
+#include <sys/un.h>
 #include <netinet/in.h>
 #include <netinet/ip.h>
 #include <arpa/inet.h>
@@ -10,7 +11,7 @@
 #include <stdlib.h>
 
 int main() {
-    int sock = socket(AF_INET, SOCK_STREAM, 0);
+    int sock = socket(AF_UNIX, SOCK_STREAM, 0);
 
     if (sock == -1) {
         perror("socket()");
@@ -18,13 +19,12 @@ int main() {
         exit(EXIT_FAILURE);
     }
 
-    struct sockaddr_in remote;
+    struct sockaddr_un remote;
 
     memset(&remote, 0, sizeof(remote));
 
-    remote.sin_port = htonl(4444);
-    remote.sin_addr.s_addr = inet_addr("127.0.0.1");
-    remote.sin_family = AF_INET;
+    remote.sun_family = AF_UNIX;
+    strcpy(remote.sun_path, "./unix_socket");
 
     int ret = connect(sock, &remote, sizeof(remote));
 

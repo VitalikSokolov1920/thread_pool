@@ -112,7 +112,11 @@ void* thread_pool_thread(void* arg) {
         if (task->task_handler) {
             res = task->task_handler(task->task_ctx);
 
-            fprintf(stdout, "task_handler result %d\n", *((int*)res));
+            if (res) {
+                fprintf(stdout, "task_handler result %d\n", *((int*)res));
+            } else {
+                fprintf(stdout, "task_handler result is NULL\n");
+            }
         }
 
         thread_task_destoy(task);

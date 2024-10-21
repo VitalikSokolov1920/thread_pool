@@ -1,10 +1,8 @@
 TARGET_PREFIX=threadpool
-TEST_TARGET_NAME=test.c
 
 ifeq ($(OS), Windows_NT)
 	TARGET=$(TARGET_PREFIX).dll
 	DEL_CMD=del
-	TEST_TAGET=test.exe
 	SOURCES=src\thread_pool.o \
 			src\thread_task.o \
 			src\thread_task_list.o \
@@ -12,7 +10,6 @@ ifeq ($(OS), Windows_NT)
 else
 	TARGET=lib$(TARGET_PREFIX).so
 	DEL_CMD=rm -f
-	TEST_TAGET=test
 	SOURCES=src/thread_pool.o \
 			src/thread_task.o \
 			src/thread_task_list.o \
@@ -29,12 +26,10 @@ all: clean_all $(SOURCES)
 	$(CC) $(LDFLAGS) $(SOURCES) -o $(TARGET)
 
 test: all
-	$(CC) $(TEST_TARGET_NAME) -o $(TEST_TAGET) -L. -l$(TARGET_PREFIX) -Iinclude -lpthread
-	$(CC) test_client.c -o client
+	make -C ./test/unix_socket
 
 test_only:
-	$(CC) $(TEST_TARGET_NAME) -o $(TEST_TAGET) -L. -l$(TARGET_PREFIX) -Iinclude -lpthread
-	$(CC) test_client.c -o client
+	make -C ./test/unix_socket
 
 %.o: %.c
 	$(CC) $(CPPFLAGS) -c $< -o $@
@@ -42,6 +37,7 @@ test_only:
 distclean: clean
 	$(DEL_CMD) $(TARGET) $(TEST_TAGET)
 	$(DEL_CMD) client
+	make -C ./test/unix_socket clean
 
 clean:
 	$(DEL_CMD) $(SOURCES)

@@ -12,10 +12,11 @@ typedef struct {
     pthread_cond_t* cond;
     pthread_mutex_t* cond_mutex;
     atomic_int available_threads;
+    unsigned int max_threads;
     pthread_t main_thread_pid;
 } thread_pool_t;
 
-thread_pool_t* thread_pool_init();
+thread_pool_t* thread_pool_init(unsigned int max_threads);
 
 void* thread_pool_thread(void* arg);
 

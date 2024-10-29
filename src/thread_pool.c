@@ -5,7 +5,10 @@
 #include "thread_pool.h"
 #include "thread_task_list.h"
 
-thread_pool_t* thread_pool_init() {
+thread_pool_t* thread_pool_init(unsigned int max_threads) {
+    if (!max_threads) {
+        max_threads = POOL_SIZE;
+    }
     // pool
 
     thread_pool_t* pool = NULL;
@@ -20,7 +23,8 @@ thread_pool_t* thread_pool_init() {
 
     // available_threads
 
-    atomic_init(&pool->available_threads, POOL_SIZE);
+    atomic_init(&pool->available_threads, max_threads);
+    pool->max_threads = max_threads;
 
     if (!pool->queue) {
         fprintf(stderr, "thread_pool_init(): Error during init queue\n");
@@ -70,15 +74,15 @@ thread_pool_t* thread_pool_init() {
 
     pthread_create(&pool->main_thread_pid, &attrs, thread_main_thread, pool);
 
-    pthread_t pid_list[POOL_SIZE] = { 0 };
+    pthread_t* pid_list = (pthread_t*)malloc(sizeof(pthread_t) * pool->max_threads);
 
-    for (size_t i = 0; i < POOL_SIZE; i++) {
+    for (size_t i = 0; i < pool->max_threads; i++) {
         pthread_t pid;
         pthread_create(&pid, &attrs, thread_pool_thread, pool);
         pid_list[i] = pid;
     }
 
-    for (size_t i = 0; i < POOL_SIZE; i++) {
+    for (size_t i = 0; i < pool->max_threads; i++) {
         printf("thread [%lu] pid: %lu\n", i, pid_list[i]);
     }
 

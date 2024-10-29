@@ -92,7 +92,7 @@ void* server_thread(void* arg) {
 }
 
 int main(int argc, char** argv) {
-    thread_pool_t* pool = thread_pool_init();
+    thread_pool_t* pool = thread_pool_init(1);
 
     if (!pool) {
         fprintf(stderr, "error: thread_pool_init()\n");

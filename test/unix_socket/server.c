@@ -19,6 +19,8 @@ typedef struct {
 } process_conn_ctx_t;
 
 void* process_conn(void* arg) {
+    printf("process_conn start\n");
+
     thread_task_ctx_t* ctx = (thread_task_ctx_t*)arg;
 
     process_conn_ctx_t* conn_ctx = (process_conn_ctx_t*)(ctx->data);
@@ -63,7 +65,9 @@ void* server_thread(void* arg) {
 
         memset(&remote_adr, 0, sizeof(remote_adr));
 
-        int sock = accept(server_fd, &remote_adr, sizeof(remote_adr));
+        socklen_t len = sizeof(remote_adr);
+
+        int sock = accept(server_fd, &remote_adr, &len);
 
         if (sock == -1) {
             perror("accept()");
@@ -92,7 +96,7 @@ void* server_thread(void* arg) {
 }
 
 int main(int argc, char** argv) {
-    thread_pool_t* pool = thread_pool_init(1);
+    thread_pool_t* pool = thread_pool_init(2);
 
     if (!pool) {
         fprintf(stderr, "error: thread_pool_init()\n");

@@ -18,7 +18,14 @@ endif
 
 LDFLAGS=-shared -ggdb -g -O0 -Werror -lpthread
 CPPFLAGS=-Iinclude -DDEBUG -ggdb -g -fPIC -O0 -Werror
+
+ifneq (,$(shell which clang))
+CC=clang
+else ifneq (,$(shell which gcc))
 CC=gcc
+else
+$(error "C compiler not found")
+endif
 
 .PHONY: all clean clean_all
 
